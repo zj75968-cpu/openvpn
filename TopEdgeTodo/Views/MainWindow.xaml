@@ -1,0 +1,104 @@
+<Window x:Class="TopEdgeTodo.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:converters="clr-namespace:TopEdgeTodo.Converters"
+        xmlns:vm="clr-namespace:TopEdgeTodo.ViewModels"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:models="clr-namespace:TopEdgeTodo.Models"
+        mc:Ignorable="d"
+        Title="TopEdge ToDo"
+        ShowActivated="False"
+        Width="380" Height="520"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="False"
+        Background="#FFFDF9E3">
+  <Window.Resources>
+    <vm:MainViewModel x:Key="ViewModel"/>
+    <converters:PriorityToBrushConverter x:Key="PriorityToBrushConverter" />
+    <ObjectDataProvider x:Key="PriorityValues" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+      <ObjectDataProvider.MethodParameters>
+        <x:Type TypeName="models:Priority"/>
+      </ObjectDataProvider.MethodParameters>
+    </ObjectDataProvider>
+  </Window.Resources>
+  <Window.DataContext>
+    <StaticResource ResourceKey="ViewModel"/>
+  </Window.DataContext>
+  <Grid Margin="10" Background="Transparent">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <!-- Top filters -->
+    <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0 0 0 8" VerticalAlignment="Center">
+      <ComboBox Width="90" ItemsSource="{Binding Projects}" SelectedItem="{Binding SelectedProject}" Margin="0 0 6 0"/>
+      <TextBox Width="120" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Margin="0 0 6 0">
+        <TextBox.ToolTip>搜索标题</TextBox.ToolTip>
+      </TextBox>
+      <ToggleButton Content="Today" IsChecked="{Binding TodayOnly}" Width="60" Margin="0 0 6 0"/>
+      <CheckBox Content="显示完成" IsChecked="{Binding ShowCompleted}" VerticalAlignment="Center" Margin="0 0 6 0"/>
+      <Button Content="Export" Command="{Binding ExportCommand}" Width="60"/>
+    </StackPanel>
+
+    <!-- Stats -->
+    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0 6 0 6">
+      <TextBlock Text="今日完成: " FontWeight="Bold" Margin="0 0 6 0"/><TextBlock Text="{Binding TodayCompletedCount}" Margin="0 12 12 0"/>
+      <TextBlock Text="未完成: " FontWeight="Bold" Margin="0 0 6 0"/><TextBlock Text="{Binding IncompleteCount}" Margin="0 12 12 0"/>
+      <TextBlock Text="Work: " FontWeight="Bold" Margin="0 0 6 0"/><TextBlock Text="{Binding WorkPendingCount}" Margin="0 12 12 0"/>
+      <TextBlock Text="Personal: " FontWeight="Bold" Margin="0 0 6 0"/><TextBlock Text="{Binding PersonalPendingCount}" Margin="0 12 12 0"/>
+    </StackPanel>
+
+    <!-- List -->
+    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+      <ItemsControl ItemsSource="{Binding View}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Margin="0 4" Padding="8" Background="#FFFFFFFF" CornerRadius="6" BorderBrush="#FFE0E0E0" BorderThickness="1">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <CheckBox Grid.Column="0" Margin="0 0 6 0" VerticalAlignment="Center"
+                          IsChecked="{Binding IsCompleted}"
+                          Command="{Binding DataContext.ToggleCompletedCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                          CommandParameter="{Binding}"/>
+                <StackPanel Grid.Column="1" Orientation="Vertical">
+                  <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                  <StackPanel Orientation="Horizontal" Spacing="8" Margin="0 2 0 0">
+                    <TextBlock Text="{Binding Project}" FontSize="11" Foreground="#FF666666"/>
+                    <TextBlock Text="{Binding DueAt, StringFormat='Due: {0:MM/dd HH:mm}', TargetNullValue='No due'}" FontSize="11" Foreground="#FF666666"/>
+                    <Border Background="{Binding Priority, Converter={StaticResource PriorityToBrushConverter}}" Padding="6 2" CornerRadius="4">
+                      <TextBlock Text="{Binding Priority}" Foreground="White" FontSize="10"/>
+                    </Border>
+                  </StackPanel>
+                </StackPanel>
+                <Button Grid.Column="2" Content="✕" Width="28" Height="24" Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}" CommandParameter="{Binding}"/>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+
+    <!-- New item -->
+    <StackPanel Grid.Row="3" Orientation="Vertical" Margin="0 8 0 0">
+      <TextBox Text="{Binding NewTitle, UpdateSourceTrigger=PropertyChanged}" Margin="0 0 0 6">
+        <TextBox.ToolTip>添加新的待办</TextBox.ToolTip>
+      </TextBox>
+      <StackPanel Orientation="Horizontal">
+        <ComboBox Width="90" ItemsSource="{Binding Projects}" SelectedItem="{Binding NewProject}" Margin="0 0 6 0"/>
+        <DatePicker Width="130" SelectedDate="{Binding NewDueAt}" Margin="0 0 6 0"/>
+        <ComboBox Width="80" SelectedItem="{Binding NewPriority}" ItemsSource="{Binding Source={StaticResource PriorityValues}}"/>
+      </StackPanel>
+      <Button Content="添加" Command="{Binding AddCommand}" Margin="0 6 0 0"/>
+    </StackPanel>
+  </Grid>
+</Window>
